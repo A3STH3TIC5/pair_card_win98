@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>DREAM PAIR ★ 페어틀 메이커</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+<style>
+@font-face{
+  font-family:'Galmuri11';
+  src:url('https://cdn.jsdelivr.net/gh/quiple/galmuri@1.0/dist/Galmuri11.woff2') format('woff2');
+}
+:root{
+  --navy:#0a1f3d;      /* deep accent / titlebar end */
+  --cyan:#3a5fb0;       /* accent text -> steel blue on LCD */
+  --steel:#8a98ad;      /* mid grey-blue */
+  --steel-light:#b9c2d2;
+  --silver-dark:#6e7891;
+  --cyan-dark:#2c4d83;
+  --lcd-bg:#c7cedb;     /* overall LCD lavender-grey */
+  --lcd-bg-dark:#aab4c6;
+  --win-face:#d6dbe6;   /* window chrome face */
+  --win-shadow:#5c6680;
+  --win-hi:#f3f5fa;
+  --user-font:'Galmuri11','Pretendard',monospace;
+}
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  font-family:var(--user-font);
+  background:
+    repeating-linear-gradient(180deg, rgba(0,0,0,0.035) 0px, rgba(0,0,0,0.035) 1px, transparent 1px, transparent 3px),
+    radial-gradient(circle at 50% 0%, #d7dde8 0%, #b7c0d2 55%, #97a2ba 100%);
+  color:#16203a;
+  padding:18px 0 70px;
+  line-height:1.5;
+}
+body.no-aa, body.no-aa *{
+  -webkit-font-smoothing:none !important;
+  -moz-osx-font-smoothing:unset !important;
+  font-smooth:never !important;
+  text-rendering:optimizeSpeed !important;
+  image-rendering:pixelated !important;
+}
+/* macOS/Safari ignore 위 속성을 무시하는 환경(Windows Chrome/Firefox 등)에서도
+   체감되는 변화를 주기 위해 비트맵 픽셀 폰트로 강제 전환 */
+body.no-aa #card, body.no-aa #card *{
+  font-family:'Galmuri11',monospace !important;
+}
+.pixel{font-family:'Galmuri11',monospace;}
+#toolbar{
+  width:600px;margin:0 auto 10px;display:flex;flex-direction:column;gap:6px;
+}
+.tb-line{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;}
+#palette-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+#palette-row span{font-size:11px;color:#33405e; font-family:'Galmuri11',monospace;}
+.swatch{width:18px;height:18px;border:2px solid #fff;box-shadow:0 0 0 1px var(--win-shadow);cursor:pointer;}
+#custom-color-row{display:flex;gap:5px;align-items:center;flex-wrap:wrap;}
+#custom-color-row input[type="color"]{
+  width:20px;height:20px;border:2px solid #fff;box-shadow:0 0 0 1px var(--win-shadow);
+  padding:0;background:none;cursor:pointer;
+}
+#font-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+#font-row select{
+  font-family:'Galmuri11',monospace;font-size:10.5px;color:#16203a;
+  background:var(--win-face);border:2px solid #fff;border-right-color:#5c6680;border-bottom-color:#5c6680;
+  box-shadow:inset -1px -1px 0 #5c6680, inset 1px 1px 0 #fff;padding:3px 4px;
+}
+.aa-toggle{display:flex;align-items:center;gap:4px;font-size:10.5px;color:#33405e;font-family:'Galmuri11',monospace;cursor:pointer;}
+.aa-toggle input{cursor:pointer;}
+
+/* ===== Outer monitor / window bezel ===== */
+#frame{
+  width:600px;
+  margin:0 auto;
+  background:var(--win-face);
+  padding:0;
+  border:2px solid #fff;
+  border-right-color:#5c6680;
+  border-bottom-color:#5c6680;
+  box-shadow:
+    inset -1px -1px 0 #5c6680,
+    inset 1px 1px 0 #fff,
+    0 0 0 1px #2b3550,
+    0 10px 32px rgba(0,0,0,0.45);
+  position:relative;
+}
+#frame::before{display:none;}
+
+/* ===== Sticker layer ===== */
+#sticker-layer{
+  position:absolute; inset:0; pointer-events:none; z-index:80; overflow:visible;
+}
+.sticker{
+  position:absolute; pointer-events:auto; cursor:grab; user-select:none; touch-action:none;
+}
+.sticker:active{cursor:grabbing;}
+.sticker img{display:block; width:100%; height:100%; pointer-events:none; -webkit-user-drag:none;}
+.sticker-del{
+  position:absolute; top:-8px; right:-8px; width:16px;height:16px;
+  background:#7a3a52;color:#fff;border:1px solid #2b3550;font-size:9px;
+  display:flex;align-items:center;justify-content:center;cursor:pointer; pointer-events:auto; z-index:2;
+}
+.sticker-resize{
+  position:absolute; bottom:-6px; right:-6px; width:11px;height:11px;
+  background:#fff;border:1px solid #2b3550;cursor:nwse-resize;pointer-events:auto; z-index:2;
+}
+
+/* ===== Title bar ===== */
+#win-titlebar{
+  display:flex; align-items:center; justify-content:space-between;
+  background:linear-gradient(90deg,var(--navy) 0%, var(--cyan-dark) 55%, #5fa8e0 100%);
+  color:#dfe9ff;
+  padding:4px 5px 4px 6px;
+  font-family:'Galmuri11',monospace;
+  font-size:13px;
+  font-weight:700;
+  letter-spacing:0.5px;
+  border-bottom:2px solid #1a2540;
+}
+#win-titlebar .tb-left{display:flex;align-items:center;gap:6px;}
+#win-title-text{outline:none; cursor:text;}
+#win-titlebar .tb-icon{
+  width:14px;height:14px;background:#ff8fc7;border:1px solid #fff;
+  box-shadow:inset 1px 1px 0 rgba(255,255,255,0.6);
+  display:inline-block;
+}
+#win-titlebar .tb-icon::after{content:'';}
+#win-titlebar .tb-btns{display:flex;gap:3px;}
+.tb-btn{
+  width:16px;height:14px;
+  background:var(--win-face);
+  border:1px solid #2b3550;
+  box-shadow:inset -1px -1px 0 #5c6680, inset 1px 1px 0 #fff;
+  font-size:9px; color:#16203a; display:flex; align-items:center; justify-content:center;
+  font-family:monospace; line-height:1;
+}
+
+/* ===== Menu bar ===== */
+#win-menubar{
+  display:flex; gap:14px;
+  background:var(--win-face);
+  border-bottom:1px solid #5c6680;
+  padding:4px 10px;
+  font-size:11px;
+  font-family:'Galmuri11',monospace;
+  color:#16203a;
+}
+#win-menubar span{cursor:default;}
+#win-menubar span u{text-decoration:underline;}
+
+#card{
+  background:var(--lcd-bg);
+  border-top:1px solid #fff;
+  position:relative;
+  overflow:hidden;
+}
+#card::after{
+  content:"";
+  position:absolute;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(180deg, rgba(10,31,61,0.035) 0px, rgba(10,31,61,0.035) 1px, transparent 1px, transparent 3px);
+}
+
+/* ===== Profile-style header (mimics Instagram.exe block) ===== */
+#tpl-header{
+  background:var(--lcd-bg);
+  color:#16203a;
+  padding:14px 16px 14px;
+  position:relative;
+  border-bottom:2px solid var(--silver-dark);
+  text-align:center;
+}
+#tpl-header .corner{
+  position:absolute; top:8px; right:12px; font-size:8.5px; color:#5c6680; letter-spacing:1px;
+}
+#tpl-pairname{
+  font-size:22px; font-weight:800; color:#1a2540;
+  letter-spacing:1px; outline:none;
+  font-family:var(--user-font);
+}
+#tpl-pairtag{font-size:10.5px; color:#3a4d72; letter-spacing:0.5px; margin-top:4px; outline:none; font-weight:500;}
+#tpl-catch{
+  font-size:11px; color:#22315a; margin-top:10px; line-height:1.6; outline:none;
+  border-top:1px solid var(--silver-dark);
+  padding-top:9px;
+}
+
+.sec-label{
+  display:flex; align-items:center; gap:6px;
+  margin:14px 16px 8px;
+  font-size:11px; color:#16203a; letter-spacing:1px; font-weight:700;
+  font-family:'Galmuri11',monospace;
+}
+.sec-label::before{content:"◆";color:var(--cyan-dark);}
+.sec-label::after{content:"";flex:1;height:1px;background:repeating-linear-gradient(90deg,var(--silver-dark) 0 4px, transparent 4px 7px);}
+
+#tpl-chars{display:flex; flex-direction:column; gap:10px; margin:0 16px;}
+.char-card{
+  display:flex;
+  background:#dfe4ee;
+  border:2px solid #fff;
+  border-right-color:#5c6680; border-bottom-color:#5c6680;
+  box-shadow:inset -1px -1px 0 #5c6680, inset 1px 1px 0 #fff;
+  position:relative;
+}
+.char-photo-col{
+  width:120px; flex-shrink:0;
+  background:repeating-linear-gradient(135deg,#c6cedd,#c6cedd 8px,#b3bdd0 8px,#b3bdd0 16px);
+  background-size:cover; background-position:center;
+  filter:saturate(0.55) contrast(1.05);
+  display:flex; align-items:center; justify-content:center;
+  font-size:9.5px; color:#33405e;
+  border-right:2px solid #5c6680;
+  cursor:pointer; position:relative; text-align:center;
+}
+.char-photo-col span{background:rgba(255,255,255,0.8); padding:3px 6px; font-family:'Galmuri11',monospace;}
+.char-photo-col.has-photo span{display:none;}
+.char-photo-col.has-photo:hover span{
+  display:inline-block; background:rgba(10,31,61,0.6); color:#fff;
+}
+.char-photo-input{display:none;}
+.char-info-col{flex:1; padding:10px 12px; min-width:0;}
+.char-quote{
+  font-size:10px; color:#5c6680; font-style:italic; outline:none; margin-bottom:4px;
+}
+.char-name-row{display:flex; align-items:baseline; gap:8px; flex-wrap:wrap;}
+.char-name{font-size:15px;font-weight:800;color:#16203a; outline:none; font-family:var(--user-font);}
+.char-keywords{font-size:9.5px;color:#3a4d72; outline:none;}
+.char-stats{
+  display:grid; grid-template-columns:repeat(4,1fr); gap:4px 6px;
+  margin-top:8px; padding-top:8px; border-top:1px dashed var(--silver-dark);
+}
+.stat-cell{text-align:center;}
+.stat-label{font-size:8px;color:#5c6680; outline:none;}
+.stat-value{font-size:10px;color:#16203a; font-weight:700; outline:none; margin-top:1px;}
+.char-desc{
+  font-size:9.5px; color:#22315a; margin-top:8px; line-height:1.6; outline:none;
+}
+.char-x{
+  position:absolute; top:4px; right:4px; font-size:9px; color:#fff; cursor:pointer;
+  background:#7a3a52;border:1px solid #2b3550;width:15px;height:15px;
+  display:flex;align-items:center;justify-content:center; z-index:2;
+}
+.add-char-card{
+  border:2px dashed var(--silver-dark); text-align:center; padding:14px; color:#3a4d72;
+  font-size:10.5px; cursor:pointer; background:#dfe4ee;
+}
+.add-char-card:hover{background:#cdd6e8;color:#16203a;}
+
+#tpl-rel{
+  margin:10px 16px 4px;
+  font-size:10.5px; color:#22315a; text-align:center; outline:none;
+  background:#dfe4ee; border:1px dashed var(--silver-dark); padding:8px 8px;
+}
+
+#tpl-timeline-wrap{
+  margin:12px 16px 4px;
+  background:#aeb8cc;
+  padding:18px 16px 14px 8px;
+  border:2px solid #fff;
+  border-right-color:#5c6680; border-bottom-color:#5c6680;
+  box-shadow:inset -1px -1px 0 #5c6680, inset 1px 1px 0 #fff;
+}
+#tpl-timeline{display:flex; align-items:flex-start; gap:0; width:100%;}
+.tl-node{flex:1 1 0; min-width:0; position:relative; padding:0 10px 0 0;}
+.tl-line{position:relative; height:14px;}
+.tl-line::before{content:""; position:absolute; left:0; right:-10px; top:6px; height:2px; background:var(--cyan-dark);}
+.tl-node:last-child{padding-right:0;}
+.tl-node:last-child .tl-line::before{display:none;}
+.tl-dot{position:absolute; left:0; top:1px; width:11px; height:11px; border-radius:0; background:#3a5fb0; box-shadow:0 0 0 2px #fff, 0 0 0 3px #2b3550; border:none;}
+.tl-date{font-size:8.5px; color:#22315a; margin-top:2px; outline:none; font-family:'Galmuri11',monospace;}
+.tl-title{font-size:10.5px; color:#16203a; font-weight:700; outline:none; line-height:1.3; word-break:break-word;}
+.tl-desc{font-size:9px; color:#33405e; margin-top:2px; outline:none; line-height:1.4; word-break:break-word;}
+.tl-del{position:absolute; top:-13px; right:2px; font-size:8px; color:#7a2840; cursor:pointer; opacity:0; transition:opacity .15s;}
+.tl-node:hover .tl-del{opacity:1;}
+
+#tpl-twocol{display:flex; gap:8px; margin:14px 16px 4px;}
+.small-box{
+  flex:1; background:#dfe4ee; padding:10px;
+  border:2px solid #fff; border-right-color:#5c6680; border-bottom-color:#5c6680;
+  box-shadow:inset -1px -1px 0 #5c6680, inset 1px 1px 0 #fff;
+}
+.small-box-title{font-size:9.5px;color:#16203a;letter-spacing:1px;margin-bottom:5px;font-weight:700; font-family:'Galmuri11',monospace;}
+#world-name{font-size:11.5px;font-weight:700;color:#16203a;outline:none;}
+#world-desc{font-size:9.5px;color:#22315a;margin-top:4px;line-height:1.55;outline:none;min-height:34px;}
+
+#chat-box{padding:0; background:none; border:none; box-shadow:none;}
+#msg-window{
+  background:#fff;
+  border:2px solid #2b3550;
+  box-shadow:2px 2px 0 rgba(0,0,0,0.22);
+}
+#msg-titlebar{
+  display:flex; justify-content:space-between; align-items:center;
+  background:linear-gradient(180deg,#fff7c2,#e7c860);
+  border-bottom:2px solid #2b3550;
+  padding:4px 6px;
+  font-size:11px; font-weight:700; color:#16203a;
+}
+#msg-titlebar .msg-tb-left{display:flex;align-items:center;gap:4px;}
+#msg-window-title{outline:none;}
+#msg-titlebar .msg-tb-btns{display:flex;gap:2px;}
+#msg-titlebar .tb-btn{width:14px;height:13px;font-size:8px;}
+#chat-list{padding:8px; max-height:190px; overflow-y:auto; background:#fff;}
+.chat-row{display:flex; align-items:flex-start; gap:6px; padding:3px 1px; border-bottom:1px dotted #c7cedb;}
+.chat-row:last-child{border-bottom:none;}
+.chat-avatar{
+  width:26px;height:26px;border-radius:50%; flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:9px; font-weight:700; color:#fff;
+  background:var(--steel-light);
+  border:2px solid #fff; box-shadow:0 0 0 1px var(--win-shadow);
+  background-size:cover; background-position:center;
+  cursor:pointer; position:relative; overflow:hidden;
+}
+.chat-row.b .chat-avatar{background-color:#9a7390;}
+.chat-avatar.has-photo{font-size:0;}
+.chat-avatar-input{display:none;}
+.chat-bubble-col{flex:1; min-width:0; text-align:left; padding-top:3px;}
+.chat-name{font-size:11px; font-weight:700; color:#16203a; outline:none;}
+.chat-row.b .chat-name{color:#3355cc;}
+.chat-colon{color:#5c6680; margin:0 2px;}
+.chat-bubble{
+  display:inline; background:none; color:#16203a; font-size:11px;
+  padding:0; border-radius:0; outline:none; line-height:1.5;
+  border:none; box-shadow:none;
+}
+.chat-row.b .chat-bubble{color:#2c4d83;}
+.chat-time{font-size:8px;color:#9aa6bb; margin-left:6px;}
+.chat-del{font-size:8px;color:#7a2840;cursor:pointer; margin:3px 0 0 2px; flex-shrink:0;}
+#msg-toolbar{
+  display:flex; align-items:center; gap:7px; flex-wrap:wrap;
+  background:linear-gradient(180deg,#fdf6c8,#e2c45c);
+  border-top:2px solid #2b3550;
+  padding:5px 8px; font-size:10px; color:#16203a; font-family:'Galmuri11',monospace;
+}
+#msg-toolbar span{cursor:default;}
+#msg-status{
+  margin-top:6px; background:#eef1f5; border:1px solid #5c6680; padding:6px 8px;
+  font-size:10px; color:#33405e; outline:none;
+}
+
+#tpl-comments{margin:14px 16px 0;}
+.gb-entry{font-size:9.5px; color:#22315a; border-bottom:1px dotted var(--silver-dark); padding:5px 2px;}
+.gb-entry b{color:#2c4d83; outline:none;}
+.gb-entry span{outline:none;}
+
+/* ===== Status bar (replaces footer) ===== */
+#tpl-footer{
+  margin-top:12px;
+  background:var(--win-face);
+  border-top:2px solid #fff;
+  box-shadow:inset 0 1px 0 #fff;
+  color:#33405e; font-size:9px; text-align:center; padding:7px; letter-spacing:0.5px;
+  font-family:'Galmuri11',monospace;
+}
+
+.add-btn{
+  display:inline-block; margin-top:6px;
+  background:var(--win-face); color:#16203a; font-size:9.5px; font-weight:700;
+  padding:5px 10px; cursor:pointer;
+  border:2px solid #fff; border-right-color:#5c6680; border-bottom-color:#5c6680;
+  box-shadow:inset -1px -1px 0 #5c6680, inset 1px 1px 0 #fff;
+  font-family:'Galmuri11',monospace;
+}
+.add-btn:active{
+  border-color:#5c6680 #fff #fff #5c6680;
+  box-shadow:inset 1px 1px 0 #5c6680;
+}
+.add-btn:hover{filter:brightness(1.03);}
+.btn-row{display:flex; gap:6px; margin:8px 16px 16px; flex-wrap:wrap;}
+[contenteditable]:hover{background:rgba(60,90,150,0.12);}
+[contenteditable]:focus{background:rgba(60,90,150,0.22);}
+
+/* 저장(캡처) 중에는 편집용 UI 숨김 */
+body.exporting .char-x,
+body.exporting .char-photo-col span,
+body.exporting .char-photo-col.has-photo span,
+body.exporting .tl-del,
+body.exporting .chat-del,
+body.exporting .add-char-card,
+body.exporting .sticker-del,
+body.exporting .sticker-resize,
+body.exporting .btn-row{
+  display:none !important;
+}
+body.exporting [contenteditable]:hover,
+body.exporting [contenteditable]:focus{
+  background:transparent !important;
+}
+</style>
+</head>
+<body>
+
+<div id="toolbar">
+  <div class="tb-line">
+    <div id="palette-row">
+      <span>테마 :</span>
+      <div class="swatch" style="background:#0a1f3d" data-c="#0a1f3d,#3a5fb0,#8a98ad,#2c4d83"></div>
+      <div class="swatch" style="background:#5b1340" data-c="#5b1340,#b0468f,#a98a9c,#7a3a52"></div>
+      <div class="swatch" style="background:#0d3b2e" data-c="#0d3b2e,#2c8a6d,#9bb0a4,#1c6e55"></div>
+      <div class="swatch" style="background:#3b2a0d" data-c="#3b2a0d,#b08a35,#b3a48a,#7a5a1c"></div>
+      <div class="swatch" style="background:#241846" data-c="#241846,#7a55c8,#a89cc0,#5a3c8a"></div>
+    </div>
+    <span class="add-btn" id="export-btn">📷 이미지로 저장</span>
+  </div>
+
+  <div class="tb-line">
+    <div id="custom-color-row">
+      <span class="pixel" style="font-size:11px;color:#33405e;">커스텀 :</span>
+      <input type="color" id="cc-navy" value="#0a1f3d" title="타이틀바 색">
+      <input type="color" id="cc-cyan" value="#3a5fb0" title="포인트 색">
+      <input type="color" id="cc-face" value="#d6dbe6" title="창 배경 색">
+      <input type="color" id="cc-lcd"  value="#c7cedb" title="LCD 배경 색">
+    </div>
+    <span class="add-btn" id="add-sticker-btn">🖼 스티커 추가</span>
+    <input type="file" id="sticker-input" accept="image/*" multiple style="display:none">
+  </div>
+
+  <div class="tb-line">
+    <div id="font-row">
+      <span class="pixel" style="font-size:11px;color:#33405e;">폰트 :</span>
+      <select id="font-select">
+        <option value="'Galmuri11','Pretendard',monospace">픽셀 (Galmuri11)</option>
+        <option value="'Pretendard',sans-serif">프리텐다드</option>
+        <option value="'Dotum','Gulim',sans-serif">고전 굴림체</option>
+        <option value="'Batang','Myungjo',serif">고전 바탕체</option>
+        <option value="monospace">모노스페이스</option>
+      </select>
+      <label class="aa-toggle"><input type="checkbox" id="aa-toggle" checked> 안티에일리어싱</label>
+    </div>
+  </div>
+</div>
+
+<div id="frame">
+
+  <div id="win-titlebar">
+    <div class="tb-left">
+      <span class="tb-icon"></span>
+      <span class="pixel" id="win-title-text" contenteditable="true">DreamPair.exe</span>
+    </div>
+    <div class="tb-btns">
+      <span class="tb-btn">_</span>
+      <span class="tb-btn">□</span>
+      <span class="tb-btn">✕</span>
+    </div>
+  </div>
+  <div id="win-menubar" class="pixel">
+    <span><u>F</u>ile</span>
+    <span><u>E</u>dit</span>
+    <span><u>V</u>iew</span>
+    <span><u>O</u>ptions</span>
+    <span><u>H</u>elp</span>
+  </div>
+
+  <div id="card">
+
+    <div id="tpl-header">
+      <div class="corner pixel">PAIR FILE NO.01</div>
+      <div id="tpl-pairname" contenteditable="true">DREAM PAIR</div>
+      <div id="tpl-pairtag" contenteditable="true">✦ FEEL THE STORY ✦ 우리들의 서사 ✦</div>
+      <div id="tpl-catch" contenteditable="true">두 사람을 한 줄로 표현하는 캐치프레이즈를 적어주세요.</div>
+    </div>
+
+    <div class="sec-label">CHARACTER</div>
+    <div id="tpl-chars"></div>
+    <div class="btn-row">
+      <span class="add-btn" id="add-char">+ 캐릭터 추가</span>
+    </div>
+
+    <div class="sec-label">RELATION</div>
+    <div id="tpl-rel" contenteditable="true">관계를 한 문장으로 정리해 적어보세요. (예: 같은 반에서 만난 첫사랑)</div>
+
+    <div class="sec-label">STORY TIMELINE</div>
+    <div id="tpl-timeline-wrap"><div id="tpl-timeline"></div></div>
+    <div class="btn-row"><span class="add-btn" id="add-tl">+ 사건 추가</span><span class="add-btn" id="remove-tl">− 사건 줄이기</span></div>
+
+    <div id="tpl-twocol">
+      <div class="small-box">
+        <div class="small-box-title">◆ WORLD</div>
+        <div id="world-name" contenteditable="true">세계관 이름</div>
+        <div id="world-desc" contenteditable="true">시대적 배경, 두 사람을 둘러싼 환경을 짧게 적어주세요.</div>
+      </div>
+      <div class="small-box" id="chat-box">
+        <div id="msg-window">
+          <div id="msg-titlebar">
+            <span class="msg-tb-left">👤 <span id="msg-window-title" contenteditable="true">대화</span></span>
+            <span class="msg-tb-btns">
+              <span class="tb-btn">_</span><span class="tb-btn">□</span><span class="tb-btn">✕</span>
+            </span>
+          </div>
+          <div id="chat-list"></div>
+          <div id="msg-toolbar">
+            <span>📌</span><span>😊+</span><span>🖼</span><span>배경화면</span><span>💾</span><span>대화저장</span><span>✕</span><span>닫기</span>
+          </div>
+        </div>
+        <div id="msg-status" contenteditable="true">너 없으면 영원히 잘꺼야...</div>
+      </div>
+    </div>
+    <div class="btn-row">
+      <span class="add-btn" id="add-chat-a">+ A 메시지</span>
+      <span class="add-btn" id="add-chat-b">+ B 메시지</span>
+    </div>
+
+    <div class="sec-label">COMMENT</div>
+    <div id="tpl-comments"></div>
+    <div class="btn-row"><span class="add-btn" id="add-gb">+ 코멘트 추가</span></div>
+
+    <div id="tpl-footer" class="pixel">ⓒ DREAM PAIR · 페어틀 · RETRO LCD STUDIO</div>
+  </div>
+  <div id="sticker-layer"></div>
+</div>
+
+<script>
+document.querySelectorAll('.swatch').forEach(sw=>{
+  sw.addEventListener('click',()=>{
+    const [navy,cyan,steel,cdark] = sw.dataset.c.split(',');
+    const r=document.documentElement.style;
+    r.setProperty('--navy',navy); r.setProperty('--cyan',cyan);
+    r.setProperty('--steel',steel); r.setProperty('--cyan-dark',cdark);
+    document.getElementById('cc-navy').value = navy;
+    document.getElementById('cc-cyan').value = cyan;
+  });
+});
+
+const r=document.documentElement.style;
+document.getElementById('cc-navy').addEventListener('input',(e)=>r.setProperty('--navy', e.target.value));
+document.getElementById('cc-cyan').addEventListener('input',(e)=>{
+  r.setProperty('--cyan', e.target.value);
+  r.setProperty('--cyan-dark', e.target.value);
+});
+document.getElementById('cc-face').addEventListener('input',(e)=>r.setProperty('--win-face', e.target.value));
+document.getElementById('cc-lcd').addEventListener('input',(e)=>r.setProperty('--lcd-bg', e.target.value));
+
+document.getElementById('font-select').addEventListener('change',(e)=>{
+  r.setProperty('--user-font', e.target.value);
+});
+document.getElementById('aa-toggle').addEventListener('change',(e)=>{
+  document.body.classList.toggle('no-aa', !e.target.checked);
+});
+
+const charsWrap=document.getElementById('tpl-chars');
+let charsData=[
+  {quote:'"대사를 입력하세요."', name:'캐릭터 A', kw:'성격 키워드 적는 곳', photo:null,
+   stats:[['나이','-'],['성별','-'],['키','-'],['직업','-']], desc:'캐릭터에 대한 설명을 적어주세요.'},
+  {quote:'"대사를 입력하세요."', name:'캐릭터 B', kw:'성격 키워드 적는 곳', photo:null,
+   stats:[['나이','-'],['성별','-'],['몸무게','-'],['직업','-']], desc:'캐릭터에 대한 설명을 적어주세요.'}
+];
+
+function renderChars(){
+  charsWrap.innerHTML='';
+  charsData.forEach((c,i)=>{
+    const card=document.createElement('div');
+    card.className='char-card';
+    const statsHtml = c.stats.map(([l,v])=>`
+      <div class="stat-cell">
+        <div class="stat-label" contenteditable="true">${l}</div>
+        <div class="stat-value" contenteditable="true">${v}</div>
+      </div>`).join('');
+    card.innerHTML=`
+      <span class="char-x" data-i="${i}">✕</span>
+      <div class="char-photo-col${c.photo?' has-photo':''}" style="${c.photo?`background-image:url('${c.photo}')`:''}">
+        <span>${c.photo?'사진 변경':'+ 사진 추가'}</span>
+        <input type="file" accept="image/*" class="char-photo-input">
+      </div>
+      <div class="char-info-col">
+        <div class="char-quote" contenteditable="true">${c.quote}</div>
+        <div class="char-name-row">
+          <span class="char-name" contenteditable="true">${c.name}</span>
+          <span class="char-keywords" contenteditable="true">${c.kw}</span>
+        </div>
+        <div class="char-stats">${statsHtml}</div>
+        <div class="char-desc" contenteditable="true">${c.desc}</div>
+      </div>
+    `;
+    card.querySelector('.char-x').addEventListener('click',()=>{charsData.splice(i,1); renderChars();});
+    const photoCol = card.querySelector('.char-photo-col');
+    const photoInput = card.querySelector('.char-photo-input');
+    photoCol.addEventListener('click',()=>photoInput.click());
+    photoInput.addEventListener('change',(e)=>{
+      const file=e.target.files[0];
+      if(!file) return;
+      const reader=new FileReader();
+      reader.onload=(ev)=>{
+        charsData[i].photo = ev.target.result;
+        renderChars();
+      };
+      reader.readAsDataURL(file);
+    });
+    charsWrap.appendChild(card);
+  });
+}
+document.getElementById('add-char').addEventListener('click',()=>{
+  if(charsData.length>=4) return;
+  charsData.push({quote:'"대사를 입력하세요."', name:'새 캐릭터', kw:'성격 키워드', photo:null,
+    stats:[['나이','-'],['성별','-'],['키','-'],['직업','-']], desc:'캐릭터에 대한 설명을 적어주세요.'});
+  renderChars();
+});
+renderChars();
+
+const tlWrap=document.getElementById('tpl-timeline');
+function addTL(){
+  const node=document.createElement('div');
+  node.className='tl-node';
+  node.innerHTML=`
+    <span class="tl-del">삭제</span>
+    <div class="tl-line"><span class="tl-dot"></span></div>
+    <div class="tl-date" contenteditable="true">YYYY.MM.DD</div>
+    <div class="tl-title" contenteditable="true">사건 제목</div>
+    <div class="tl-desc" contenteditable="true">짧은 설명</div>
+  `;
+  node.querySelector('.tl-del').addEventListener('click',()=>node.remove());
+  tlWrap.appendChild(node);
+}
+document.getElementById('add-tl').addEventListener('click',addTL);
+document.getElementById('remove-tl').addEventListener('click',()=>{
+  if(tlWrap.lastElementChild) tlWrap.lastElementChild.remove();
+});
+addTL();addTL();addTL();addTL();
+
+const chatList=document.getElementById('chat-list');
+function addChat(side){
+  const row=document.createElement('div');
+  row.className='chat-row '+side;
+  row.innerHTML=`
+    <div class="chat-avatar">
+      <span class="avatar-letter">${side==='a'?'A':'B'}</span>
+      <input type="file" accept="image/*" class="chat-avatar-input">
+    </div>
+    <div class="chat-bubble-col">
+      <span class="chat-name" contenteditable="true">${side==='a'?'우리는':'♡연인'}</span><span class="chat-colon">:</span><span class="chat-bubble" contenteditable="true">대화 내용을 입력하세요.</span><span class="chat-time">오후 9:0${chatList.children.length+1}</span>
+    </div>
+    <span class="chat-del">✕</span>
+  `;
+  row.querySelector('.chat-del').addEventListener('click',()=>row.remove());
+  const avatar = row.querySelector('.chat-avatar');
+  const avatarInput = row.querySelector('.chat-avatar-input');
+  avatar.addEventListener('click',()=>avatarInput.click());
+  avatarInput.addEventListener('change',(e)=>{
+    const file=e.target.files[0];
+    if(!file) return;
+    const reader=new FileReader();
+    reader.onload=(ev)=>{
+      avatar.style.backgroundImage=`url('${ev.target.result}')`;
+      avatar.classList.add('has-photo');
+    };
+    reader.readAsDataURL(file);
+  });
+  chatList.appendChild(row);
+}
+document.getElementById('add-chat-a').addEventListener('click',()=>addChat('a'));
+document.getElementById('add-chat-b').addEventListener('click',()=>addChat('b'));
+addChat('a');addChat('b');addChat('a');
+
+const gbList=document.getElementById('tpl-comments');
+function addGB(){
+  const row=document.createElement('div');
+  row.className='gb-entry';
+  row.innerHTML=`<b contenteditable="true">방문자</b> : <span contenteditable="true">코멘트를 남겨주세요.</span>`;
+  gbList.appendChild(row);
+}
+document.getElementById('add-gb').addEventListener('click',addGB);
+addGB();
+
+const stickerLayer=document.getElementById('sticker-layer');
+document.getElementById('add-sticker-btn').addEventListener('click',()=>document.getElementById('sticker-input').click());
+document.getElementById('sticker-input').addEventListener('change',(e)=>{
+  [...e.target.files].forEach((file,idx)=>{
+    const reader=new FileReader();
+    reader.onload=(ev)=>addSticker(ev.target.result, idx);
+    reader.readAsDataURL(file);
+  });
+  e.target.value='';
+});
+function addSticker(src, idx){
+  const el=document.createElement('div');
+  el.className='sticker';
+  el.style.left=(120+(idx||0)*20)+'px';
+  el.style.top=(120+(idx||0)*20)+'px';
+  el.style.width='80px';
+  el.style.height='80px';
+  el.innerHTML=`<img src="${src}" draggable="false"><span class="sticker-del">✕</span><span class="sticker-resize"></span>`;
+  stickerLayer.appendChild(el);
+  makeStickerDraggable(el);
+  makeStickerResizable(el.querySelector('.sticker-resize'), el);
+  el.querySelector('.sticker-del').addEventListener('click',()=>el.remove());
+}
+function makeStickerDraggable(el){
+  let sx,sy,ox,oy,dragging=false;
+  el.addEventListener('pointerdown',(e)=>{
+    if(e.target.classList.contains('sticker-resize')||e.target.classList.contains('sticker-del'))return;
+    dragging=true; sx=e.clientX; sy=e.clientY;
+    ox=el.offsetLeft; oy=el.offsetTop;
+    el.setPointerCapture(e.pointerId);
+  });
+  el.addEventListener('pointermove',(e)=>{
+    if(!dragging)return;
+    el.style.left=(ox+e.clientX-sx)+'px';
+    el.style.top=(oy+e.clientY-sy)+'px';
+  });
+  el.addEventListener('pointerup',()=>dragging=false);
+  el.addEventListener('pointercancel',()=>dragging=false);
+}
+function makeStickerResizable(handle, el){
+  let sx,sy,sw,sh,resizing=false;
+  handle.addEventListener('pointerdown',(e)=>{
+    resizing=true; sx=e.clientX; sy=e.clientY;
+    sw=el.offsetWidth; sh=el.offsetHeight;
+    e.stopPropagation();
+    handle.setPointerCapture(e.pointerId);
+  });
+  handle.addEventListener('pointermove',(e)=>{
+    if(!resizing)return;
+    el.style.width=Math.max(20,sw+e.clientX-sx)+'px';
+    el.style.height=Math.max(20,sh+e.clientY-sy)+'px';
+    e.stopPropagation();
+  });
+  handle.addEventListener('pointerup',()=>resizing=false);
+  handle.addEventListener('pointercancel',()=>resizing=false);
+}
+
+document.getElementById('export-btn').addEventListener('click',()=>{
+  document.body.classList.add('exporting');
+  html2canvas(document.getElementById('frame'), {backgroundColor:null, scale:2}).then(canvas=>{
+    document.body.classList.remove('exporting');
+    let name = document.getElementById('win-title-text').textContent.trim() || 'dream_pair_card';
+    name = name.replace(/\.exe$/i,'').replace(/[\\/:*?"<>|]+/g,'').trim().slice(0,80) || 'dream_pair_card';
+    const link=document.createElement('a');
+    link.download=name+'.png';
+    link.href=canvas.toDataURL('image/png');
+    link.click();
+  }).catch(()=>{
+    document.body.classList.remove('exporting');
+  });
+});
+</script>
+</body>
+</html>
