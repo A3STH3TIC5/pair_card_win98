@@ -132,8 +132,8 @@ body.no-aa #card, body.no-aa #card *{
   background:var(--win-face); border:2px solid #fff;
   border-right-color:#5c6680; border-bottom-color:#5c6680;
   box-shadow:2px 2px 0 rgba(0,0,0,0.3);
-  padding:6px; display:none; flex-wrap:wrap; gap:4px;
-  width:210px;
+  padding:6px; display:none; flex-wrap:wrap; gap:3px;
+  width:290px;
 }
 #emoji-picker.open{display:flex;}
 .ep-emoji{font-size:18px; cursor:pointer; padding:2px; line-height:1;}
@@ -451,13 +451,31 @@ body.exporting [contenteditable]:focus{
     <div class="tb-left">
       <span class="tb-icon" id="tb-icon-btn" title="아이콘 변경">💾
         <div id="emoji-picker">
-          <span class="ep-emoji">💾</span><span class="ep-emoji">🌸</span><span class="ep-emoji">⭐</span><span class="ep-emoji">💫</span><span class="ep-emoji">🌙</span>
+          <!-- 하트/감정 -->
           <span class="ep-emoji">🩷</span><span class="ep-emoji">🤍</span><span class="ep-emoji">💙</span><span class="ep-emoji">💜</span><span class="ep-emoji">🖤</span>
-          <span class="ep-emoji">🌺</span><span class="ep-emoji">🌼</span><span class="ep-emoji">🍀</span><span class="ep-emoji">🦋</span><span class="ep-emoji">🐱</span>
-          <span class="ep-emoji">🐰</span><span class="ep-emoji">🦊</span><span class="ep-emoji">🐻</span><span class="ep-emoji">🐧</span><span class="ep-emoji">🌈</span>
-          <span class="ep-emoji">🍒</span><span class="ep-emoji">🎀</span><span class="ep-emoji">🔮</span><span class="ep-emoji">✨</span><span class="ep-emoji">🎵</span>
-          <span class="ep-emoji">📷</span><span class="ep-emoji">📺</span><span class="ep-emoji">💻</span><span class="ep-emoji">🕹️</span><span class="ep-emoji">🧸</span>
-          <span class="ep-emoji">🌷</span><span class="ep-emoji">🍄</span><span class="ep-emoji">☁️</span><span class="ep-emoji">⚡</span><span class="ep-emoji">🔥</span>
+          <span class="ep-emoji">🩵</span><span class="ep-emoji">🧡</span><span class="ep-emoji">💛</span><span class="ep-emoji">💚</span><span class="ep-emoji">🤎</span>
+          <span class="ep-emoji">💗</span><span class="ep-emoji">💓</span><span class="ep-emoji">💞</span><span class="ep-emoji">💝</span><span class="ep-emoji">💘</span>
+          <span class="ep-emoji">🫀</span><span class="ep-emoji">💌</span><span class="ep-emoji">🫧</span><span class="ep-emoji">✨</span><span class="ep-emoji">💫</span>
+          <!-- 자연/동물 -->
+          <span class="ep-emoji">🌸</span><span class="ep-emoji">🌺</span><span class="ep-emoji">🌼</span><span class="ep-emoji">🌻</span><span class="ep-emoji">🌷</span>
+          <span class="ep-emoji">🪷</span><span class="ep-emoji">🍀</span><span class="ep-emoji">🌿</span><span class="ep-emoji">🍃</span><span class="ep-emoji">🍄</span>
+          <span class="ep-emoji">🦋</span><span class="ep-emoji">🐱</span><span class="ep-emoji">🐰</span><span class="ep-emoji">🦊</span><span class="ep-emoji">🐻</span>
+          <span class="ep-emoji">🐼</span><span class="ep-emoji">🐧</span><span class="ep-emoji">🐸</span><span class="ep-emoji">🐨</span><span class="ep-emoji">🦄</span>
+          <span class="ep-emoji">🐝</span><span class="ep-emoji">🐞</span><span class="ep-emoji">🦎</span><span class="ep-emoji">🐙</span><span class="ep-emoji">🦈</span>
+          <!-- 하늘/날씨 -->
+          <span class="ep-emoji">⭐</span><span class="ep-emoji">🌙</span><span class="ep-emoji">☀️</span><span class="ep-emoji">🌈</span><span class="ep-emoji">☁️</span>
+          <span class="ep-emoji">⚡</span><span class="ep-emoji">🌊</span><span class="ep-emoji">❄️</span><span class="ep-emoji">🌙</span><span class="ep-emoji">🌠</span>
+          <!-- 음식/사물 -->
+          <span class="ep-emoji">🍒</span><span class="ep-emoji">🍓</span><span class="ep-emoji">🍑</span><span class="ep-emoji">🍇</span><span class="ep-emoji">🍰</span>
+          <span class="ep-emoji">🧁</span><span class="ep-emoji">🍭</span><span class="ep-emoji">🍬</span><span class="ep-emoji">🧋</span><span class="ep-emoji">☕</span>
+          <!-- 창작/레트로 -->
+          <span class="ep-emoji">🎀</span><span class="ep-emoji">🔮</span><span class="ep-emoji">🧸</span><span class="ep-emoji">🎵</span><span class="ep-emoji">🎶</span>
+          <span class="ep-emoji">📷</span><span class="ep-emoji">📺</span><span class="ep-emoji">💻</span><span class="ep-emoji">🕹️</span><span class="ep-emoji">💾</span>
+          <span class="ep-emoji">📼</span><span class="ep-emoji">📻</span><span class="ep-emoji">☎️</span><span class="ep-emoji">🔭</span><span class="ep-emoji">🔬</span>
+          <span class="ep-emoji">🪄</span><span class="ep-emoji">🎭</span><span class="ep-emoji">🎪</span><span class="ep-emoji">🎠</span><span class="ep-emoji">🎡</span>
+          <!-- 기호/장식 -->
+          <span class="ep-emoji">🔥</span><span class="ep-emoji">💎</span><span class="ep-emoji">👑</span><span class="ep-emoji">🗝️</span><span class="ep-emoji">🧿</span>
+          <span class="ep-emoji">🪬</span><span class="ep-emoji">☯️</span><span class="ep-emoji">⚜️</span><span class="ep-emoji">🏵️</span><span class="ep-emoji">🎗️</span>
         </div>
       </span>
       <span class="pixel" id="win-title-text" contenteditable="true">DreamPair.exe</span>
