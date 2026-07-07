@@ -384,7 +384,7 @@ body.no-aa #card, body.no-aa #card *{
 [contenteditable]:hover{background:rgba(60,90,150,0.12);}
 [contenteditable]:focus{background:rgba(60,90,150,0.22);}
 
-/* 저장(캡처) 중에는 편집용 UI 숨김 */
+/* 저장(캡처) 중 + 미리보기 중에는 편집용 UI 숨김 (실제 저장 결과와 동일하게 보이도록) */
 body.exporting .char-x,
 body.exporting .char-photo-col span,
 body.exporting .char-photo-col.has-photo span,
@@ -393,16 +393,53 @@ body.exporting .chat-del,
 body.exporting .add-char-card,
 body.exporting .sticker-del,
 body.exporting .sticker-resize,
-body.exporting .btn-row{
+body.exporting .btn-row,
+body.previewing .char-x,
+body.previewing .char-photo-col span,
+body.previewing .char-photo-col.has-photo span,
+body.previewing .tl-del,
+body.previewing .chat-del,
+body.previewing .add-char-card,
+body.previewing .sticker-del,
+body.previewing .sticker-resize,
+body.previewing .btn-row{
   display:none !important;
 }
 body.exporting [contenteditable]:hover,
-body.exporting [contenteditable]:focus{
+body.exporting [contenteditable]:focus,
+body.previewing [contenteditable]:hover,
+body.previewing [contenteditable]:focus{
   background:transparent !important;
 }
+
+/* 미리보기 모드 표시 */
+body.previewing #toolbar{opacity:0.55;}
+body.previewing #frame{
+  box-shadow:
+    inset -1px -1px 0 #5c6680,
+    inset 1px 1px 0 #fff,
+    0 0 0 1px #2b3550,
+    0 0 0 3px #3a5fb0,
+    0 10px 32px rgba(0,0,0,0.45);
+}
+#preview-banner{
+  display:none;
+  width:600px; margin:0 auto 8px;
+  background:#2c4d83; color:#fff;
+  font-family:'Galmuri11',monospace; font-size:11px;
+  padding:7px 10px; text-align:center;
+  border:2px solid #fff; border-right-color:#5c6680; border-bottom-color:#5c6680;
+  box-shadow:inset -1px -1px 0 #5c6680, inset 1px 1px 0 #fff;
+}
+body.previewing #preview-banner{display:block;}
+/* 미리보기 중에도 스티커는 계속 드래그로 위치 조정 가능 (저장 전 최종 위치 확인/조정용) */
+body.previewing .sticker{cursor:grab;}
+body.previewing .sticker:active{cursor:grabbing;}
 </style>
 </head>
 <body>
+
+<div id="preview-banner">🔍 미리보기 모드 — 저장했을 때 실제로 보이는 화면입니다. 스티커는 이 상태에서 드래그로 위치를 조정할 수 있어요.</div>
 
 <div id="toolbar">
   <div class="tb-line">
@@ -414,6 +451,7 @@ body.exporting [contenteditable]:focus{
       <div class="swatch" style="background:#3b2a0d" data-c="#3b2a0d,#b08a35,#b3a48a,#7a5a1c"></div>
       <div class="swatch" style="background:#241846" data-c="#241846,#7a55c8,#a89cc0,#5a3c8a"></div>
     </div>
+    <span class="add-btn" id="preview-btn">🔍 미리보기</span>
     <span class="add-btn" id="export-btn">📷 이미지로 저장</span>
   </div>
 
@@ -535,7 +573,7 @@ body.exporting [contenteditable]:focus{
             <span>📌</span><span>😊+</span><span>🖼</span><span>배경화면</span><span>💾</span><span>대화저장</span><span>✕</span><span>닫기</span>
           </div>
         </div>
-        <div id="msg-status" contenteditable="true">너 없으면 영원히 잘꺼야...</div>
+        <div id="msg-status" contenteditable="true">보내지 못한 메세지...</div>
       </div>
     </div>
     <div class="btn-row">
@@ -734,17 +772,28 @@ document.getElementById('sticker-input').addEventListener('change',(e)=>{
   e.target.value='';
 });
 function addSticker(src, idx){
-  const el=document.createElement('div');
-  el.className='sticker';
-  el.style.left=(120+(idx||0)*20)+'px';
-  el.style.top=(120+(idx||0)*20)+'px';
-  el.style.width='80px';
-  el.style.height='80px';
-  el.innerHTML=`<img src="${src}" draggable="false"><span class="sticker-del">✕</span><span class="sticker-resize"></span>`;
-  stickerLayer.appendChild(el);
-  makeStickerDraggable(el);
-  makeStickerResizable(el.querySelector('.sticker-resize'), el);
-  el.querySelector('.sticker-del').addEventListener('click',()=>el.remove());
+  const baseSize=90; // 스티커의 긴 변 기준 크기
+  const placeSticker=(ratio)=>{
+    let w,h;
+    if(ratio>=1){ w=baseSize; h=baseSize/ratio; }
+    else{ h=baseSize; w=baseSize*ratio; }
+    const el=document.createElement('div');
+    el.className='sticker';
+    el.style.left=(120+(idx||0)*20)+'px';
+    el.style.top=(120+(idx||0)*20)+'px';
+    el.style.width=w+'px';
+    el.style.height=h+'px';
+    el.innerHTML=`<img src="${src}" draggable="false"><span class="sticker-del">✕</span><span class="sticker-resize"></span>`;
+    stickerLayer.appendChild(el);
+    makeStickerDraggable(el);
+    makeStickerResizable(el.querySelector('.sticker-resize'), el);
+    el.querySelector('.sticker-del').addEventListener('click',()=>el.remove());
+  };
+  // 원본 이미지의 가로:세로 비율을 먼저 구한 뒤, 그 비율에 맞춰 스티커 크기를 정함
+  const probe=new Image();
+  probe.onload=()=>placeSticker((probe.naturalWidth/probe.naturalHeight)||1);
+  probe.onerror=()=>placeSticker(1);
+  probe.src=src;
 }
 function makeStickerDraggable(el){
   let sx,sy,ox,oy,dragging=false;
@@ -763,27 +812,48 @@ function makeStickerDraggable(el){
   el.addEventListener('pointercancel',()=>dragging=false);
 }
 function makeStickerResizable(handle, el){
-  let sx,sy,sw,sh,resizing=false;
+  let sx,sy,sw,sh,ratio,resizing=false;
+  const MIN=20;
   handle.addEventListener('pointerdown',(e)=>{
     resizing=true; sx=e.clientX; sy=e.clientY;
     sw=el.offsetWidth; sh=el.offsetHeight;
+    ratio = sw/sh || 1; // 리사이즈 시작 시점의 가로:세로 비율을 그대로 유지
     e.stopPropagation();
     handle.setPointerCapture(e.pointerId);
   });
   handle.addEventListener('pointermove',(e)=>{
     if(!resizing)return;
-    el.style.width=Math.max(20,sw+e.clientX-sx)+'px';
-    el.style.height=Math.max(20,sh+e.clientY-sy)+'px';
+    const dx=e.clientX-sx, dy=e.clientY-sy;
+    // 가로/세로 중 더 크게 움직인 방향의 이동량으로 크기를 정하고, 비율은 고정
+    const delta = Math.abs(dx) > Math.abs(dy) ? dx : dy;
+    let newW = Math.max(MIN, sw+delta);
+    let newH = newW/ratio;
+    if(newH < MIN){ newH = MIN; newW = newH*ratio; }
+    el.style.width = newW+'px';
+    el.style.height = newH+'px';
     e.stopPropagation();
   });
   handle.addEventListener('pointerup',()=>resizing=false);
   handle.addEventListener('pointercancel',()=>resizing=false);
 }
 
+const previewBtn=document.getElementById('preview-btn');
+function setPreviewMode(on){
+  document.body.classList.toggle('previewing', on);
+  previewBtn.textContent = on ? '✏️ 편집으로 돌아가기' : '🔍 미리보기';
+}
+previewBtn.addEventListener('click',()=>{
+  setPreviewMode(!document.body.classList.contains('previewing'));
+});
+
 document.getElementById('export-btn').addEventListener('click',()=>{
+  // 미리보기 중이었는지 기억해뒀다가 저장 후 그대로 복원 (저장 전후로 화면이 바뀌어
+  // 스티커 위치가 달라 보이는 문제를 막기 위해, 저장 시에도 미리보기와 동일한 상태를 사용)
+  const wasPreviewing = document.body.classList.contains('previewing');
   document.body.classList.add('exporting');
   html2canvas(document.getElementById('frame'), {backgroundColor:null, scale:2}).then(canvas=>{
     document.body.classList.remove('exporting');
+    if(!wasPreviewing) setPreviewMode(false);
     let name = document.getElementById('win-title-text').textContent.trim() || 'dream_pair_card';
     name = name.replace(/\.exe$/i,'').replace(/[\\/:*?"<>|]+/g,'').trim().slice(0,80) || 'dream_pair_card';
     const link=document.createElement('a');
@@ -792,6 +862,7 @@ document.getElementById('export-btn').addEventListener('click',()=>{
     link.click();
   }).catch(()=>{
     document.body.classList.remove('exporting');
+    if(!wasPreviewing) setPreviewMode(false);
   });
 });
 </script>
