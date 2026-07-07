@@ -22,6 +22,7 @@
   --win-face:#d6dbe6;   /* window chrome face */
   --win-shadow:#5c6680;
   --win-hi:#f3f5fa;
+  --title-end:#5fa8e0;  /* titlebar gradient right end */
   --user-font:'Galmuri11','Pretendard',monospace;
 }
 *{box-sizing:border-box;}
@@ -109,7 +110,7 @@ body.no-aa #card, body.no-aa #card *{
 /* ===== Title bar ===== */
 #win-titlebar{
   display:flex; align-items:center; justify-content:space-between;
-  background:linear-gradient(90deg,var(--navy) 0%, var(--cyan-dark) 55%, #5fa8e0 100%);
+  background:linear-gradient(90deg,var(--navy) 0%, var(--cyan-dark) 55%, var(--title-end) 100%);
   color:#dfe9ff;
   padding:4px 5px 4px 6px;
   font-family:'Galmuri11',monospace;
@@ -121,11 +122,22 @@ body.no-aa #card, body.no-aa #card *{
 #win-titlebar .tb-left{display:flex;align-items:center;gap:6px;}
 #win-title-text{outline:none; cursor:text;}
 #win-titlebar .tb-icon{
-  width:14px;height:14px;background:#ff8fc7;border:1px solid #fff;
-  box-shadow:inset 1px 1px 0 rgba(255,255,255,0.6);
-  display:inline-block;
+  width:18px;height:18px;
+  display:inline-flex;align-items:center;justify-content:center;
+  font-size:14px; cursor:pointer; user-select:none;
+  position:relative;
 }
-#win-titlebar .tb-icon::after{content:'';}
+#emoji-picker{
+  display:none; position:absolute; top:32px; left:6px; z-index:200;
+  background:var(--win-face); border:2px solid #fff;
+  border-right-color:#5c6680; border-bottom-color:#5c6680;
+  box-shadow:2px 2px 0 rgba(0,0,0,0.3);
+  padding:6px; display:none; flex-wrap:wrap; gap:4px;
+  width:210px;
+}
+#emoji-picker.open{display:flex;}
+.ep-emoji{font-size:18px; cursor:pointer; padding:2px; line-height:1;}
+.ep-emoji:hover{background:rgba(60,90,150,0.18);}
 #win-titlebar .tb-btns{display:flex;gap:3px;}
 .tb-btn{
   width:16px;height:14px;
@@ -301,7 +313,7 @@ body.no-aa #card, body.no-aa #card *{
 #msg-window-title{outline:none;}
 #msg-titlebar .msg-tb-btns{display:flex;gap:2px;}
 #msg-titlebar .tb-btn{width:14px;height:13px;font-size:8px;}
-#chat-list{padding:8px; max-height:190px; overflow-y:auto; background:#fff;}
+#chat-list{padding:8px; background:#fff;}
 .chat-row{display:flex; align-items:flex-start; gap:6px; padding:3px 1px; border-bottom:1px dotted #c7cedb;}
 .chat-row:last-child{border-bottom:none;}
 .chat-avatar{
@@ -408,8 +420,9 @@ body.exporting [contenteditable]:focus{
   <div class="tb-line">
     <div id="custom-color-row">
       <span class="pixel" style="font-size:11px;color:#33405e;">커스텀 :</span>
-      <input type="color" id="cc-navy" value="#0a1f3d" title="타이틀바 색">
-      <input type="color" id="cc-cyan" value="#3a5fb0" title="포인트 색">
+      <input type="color" id="cc-navy" value="#0a1f3d" title="타이틀바 왼쪽 색">
+      <input type="color" id="cc-cyan" value="#3a5fb0" title="타이틀바 중간 색">
+      <input type="color" id="cc-title-end" value="#5fa8e0" title="타이틀바 오른쪽(그라데이션 끝) 색">
       <input type="color" id="cc-face" value="#d6dbe6" title="창 배경 색">
       <input type="color" id="cc-lcd"  value="#c7cedb" title="LCD 배경 색">
     </div>
@@ -436,7 +449,17 @@ body.exporting [contenteditable]:focus{
 
   <div id="win-titlebar">
     <div class="tb-left">
-      <span class="tb-icon"></span>
+      <span class="tb-icon" id="tb-icon-btn" title="아이콘 변경">💾
+        <div id="emoji-picker">
+          <span class="ep-emoji">💾</span><span class="ep-emoji">🌸</span><span class="ep-emoji">⭐</span><span class="ep-emoji">💫</span><span class="ep-emoji">🌙</span>
+          <span class="ep-emoji">🩷</span><span class="ep-emoji">🤍</span><span class="ep-emoji">💙</span><span class="ep-emoji">💜</span><span class="ep-emoji">🖤</span>
+          <span class="ep-emoji">🌺</span><span class="ep-emoji">🌼</span><span class="ep-emoji">🍀</span><span class="ep-emoji">🦋</span><span class="ep-emoji">🐱</span>
+          <span class="ep-emoji">🐰</span><span class="ep-emoji">🦊</span><span class="ep-emoji">🐻</span><span class="ep-emoji">🐧</span><span class="ep-emoji">🌈</span>
+          <span class="ep-emoji">🍒</span><span class="ep-emoji">🎀</span><span class="ep-emoji">🔮</span><span class="ep-emoji">✨</span><span class="ep-emoji">🎵</span>
+          <span class="ep-emoji">📷</span><span class="ep-emoji">📺</span><span class="ep-emoji">💻</span><span class="ep-emoji">🕹️</span><span class="ep-emoji">🧸</span>
+          <span class="ep-emoji">🌷</span><span class="ep-emoji">🍄</span><span class="ep-emoji">☁️</span><span class="ep-emoji">⚡</span><span class="ep-emoji">🔥</span>
+        </div>
+      </span>
       <span class="pixel" id="win-title-text" contenteditable="true">DreamPair.exe</span>
     </div>
     <div class="tb-btns">
@@ -518,8 +541,11 @@ document.querySelectorAll('.swatch').forEach(sw=>{
     const r=document.documentElement.style;
     r.setProperty('--navy',navy); r.setProperty('--cyan',cyan);
     r.setProperty('--steel',steel); r.setProperty('--cyan-dark',cdark);
+    // 그라데이션 끝색은 cyan보다 밝게 자동 설정
+    r.setProperty('--title-end', cyan);
     document.getElementById('cc-navy').value = navy;
     document.getElementById('cc-cyan').value = cyan;
+    document.getElementById('cc-title-end').value = cyan;
   });
 });
 
@@ -529,8 +555,25 @@ document.getElementById('cc-cyan').addEventListener('input',(e)=>{
   r.setProperty('--cyan', e.target.value);
   r.setProperty('--cyan-dark', e.target.value);
 });
+document.getElementById('cc-title-end').addEventListener('input',(e)=>r.setProperty('--title-end', e.target.value));
 document.getElementById('cc-face').addEventListener('input',(e)=>r.setProperty('--win-face', e.target.value));
 document.getElementById('cc-lcd').addEventListener('input',(e)=>r.setProperty('--lcd-bg', e.target.value));
+
+// 이모티콘 픽커
+const tbIconBtn = document.getElementById('tb-icon-btn');
+const emojiPicker = document.getElementById('emoji-picker');
+tbIconBtn.addEventListener('click',(e)=>{
+  e.stopPropagation();
+  emojiPicker.classList.toggle('open');
+});
+document.addEventListener('click',()=>emojiPicker.classList.remove('open'));
+emojiPicker.querySelectorAll('.ep-emoji').forEach(ep=>{
+  ep.addEventListener('click',(e)=>{
+    e.stopPropagation();
+    tbIconBtn.childNodes[0].textContent = ep.textContent;
+    emojiPicker.classList.remove('open');
+  });
+});
 
 document.getElementById('font-select').addEventListener('change',(e)=>{
   r.setProperty('--user-font', e.target.value);
